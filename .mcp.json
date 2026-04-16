@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "parts_db": {
+      "command": "python3",
+      "args": ["mcp/parts_db_mcp.py"],
+      "env": {}
+    },
+    "doc_output": {
+      "command": "python3",
+      "args": ["mcp/doc_output_mcp.py"],
+      "env": {}
+    }
+  }
+}
