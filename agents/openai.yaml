@@ -1,0 +1,3 @@
+display_name: Embedded Engineering
+short_description: Embedded hardware, firmware, protocol, and RF design workflows
+default_prompt: Use this skill for embedded hardware selection, schematic and PCB guidance, firmware scaffolding, protocol framing, debugging, and RF matching or antenna tasks.
