@@ -1,10 +1,11 @@
-# embedded-engineering
+## Maintainers
 
-<!--
-  Co-Author: Simon Su (Simon-Su-1105)
-  Email: 1362495971@qq.com
-  Role: Key Maintainer & Contributor
--->
+**Simon Su** ([@Simon-Su-1105](https://github.com/Simon-Su-1105)) — Key Maintainer & Contributor  
+Email: 1362495971@qq.com
+
+---
+
+# embedded-engineering
 
 `embedded-engineering` is a Codex skill for embedded hardware, firmware, communication protocol, and RF design work.
 
