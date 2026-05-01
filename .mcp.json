@@ -1,14 +1,20 @@
 {
   "mcpServers": {
     "parts_db": {
-      "command": "python3",
+      "command": "C:\\Users\\24560\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
       "args": ["mcp/parts_db_mcp.py"],
-      "env": {}
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
     },
     "doc_output": {
-      "command": "python3",
+      "command": "C:\\Users\\24560\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
       "args": ["mcp/doc_output_mcp.py"],
-      "env": {}
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }

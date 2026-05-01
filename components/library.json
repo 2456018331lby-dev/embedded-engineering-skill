@@ -1,0 +1,662 @@
+{
+  "schema_version": 2,
+  "components": {
+    "ESP32-C3-MINI-1": {
+      "kind": "mcu_module",
+      "symbol": "RF_Module:ESP32-C3-MINI-1",
+      "footprint": "RF_Module:ESP32-C3-WROOM-02",
+      "description": "ESP32-C3 Wi-Fi/BLE module for cost-optimised IoT sensor nodes.",
+      "supplier": "Espressif/LCSC",
+      "lcsc_part": "C2934568",
+      "package": "SMD module",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "ESP32-C3-WROOM-02",
+        "ESP32-C3-MINI-1U"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "required_power_pins": [
+        "3V3",
+        "GND"
+      ],
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 2,
+          "net": "+3V3"
+        },
+        {
+          "value": "10uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ],
+      "control_pins": {
+        "EN": {
+          "default_net": "EN",
+          "requires": "pullup",
+          "resistance": "10k"
+        },
+        "GPIO9": {
+          "default_net": "BOOT",
+          "requires": "pullup",
+          "resistance": "10k"
+        }
+      },
+      "interfaces": {
+        "i2c": [
+          {
+            "scl": "GPIO4",
+            "sda": "GPIO5"
+          }
+        ],
+        "uart": [
+          {
+            "tx": "GPIO21",
+            "rx": "GPIO20"
+          }
+        ],
+        "spi": [
+          {
+            "sck": "GPIO6",
+            "mosi": "GPIO7",
+            "miso": "GPIO2",
+            "cs": "GPIO10"
+          }
+        ],
+        "adc": [
+          "GPIO0",
+          "GPIO1",
+          "GPIO3"
+        ]
+      },
+      "reserved_pins": [
+        "3V3",
+        "GND",
+        "EN",
+        "GPIO8",
+        "GPIO9"
+      ]
+    },
+    "ESP32-S3-WROOM-1": {
+      "kind": "mcu_module",
+      "symbol": "RF_Module:ESP32-S3-WROOM-1",
+      "footprint": "RF_Module:ESP32-S3-WROOM-1",
+      "description": "ESP32-S3 Wi-Fi/BLE module for richer sensor nodes and USB-capable designs.",
+      "supplier": "Espressif/LCSC",
+      "lcsc_part": "C2913205",
+      "package": "SMD module",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "ESP32-S3-WROOM-1U",
+        "ESP32-S3-MINI-1"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "required_power_pins": [
+        "3V3",
+        "GND"
+      ],
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 3,
+          "net": "+3V3"
+        },
+        {
+          "value": "10uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ],
+      "control_pins": {
+        "EN": {
+          "default_net": "EN",
+          "requires": "pullup",
+          "resistance": "10k"
+        },
+        "GPIO0": {
+          "default_net": "BOOT",
+          "requires": "pullup",
+          "resistance": "10k"
+        }
+      },
+      "interfaces": {
+        "i2c": [
+          {
+            "scl": "GPIO8",
+            "sda": "GPIO9"
+          }
+        ],
+        "uart": [
+          {
+            "tx": "GPIO43",
+            "rx": "GPIO44"
+          }
+        ],
+        "spi": [
+          {
+            "sck": "GPIO12",
+            "mosi": "GPIO11",
+            "miso": "GPIO13",
+            "cs": "GPIO10"
+          }
+        ],
+        "adc": [
+          "GPIO1",
+          "GPIO2",
+          "GPIO3",
+          "GPIO4"
+        ]
+      },
+      "reserved_pins": [
+        "3V3",
+        "GND",
+        "EN",
+        "GPIO0"
+      ]
+    },
+    "NRF52840-MODULE": {
+      "kind": "mcu_module",
+      "symbol": "RF_Module:MDBT50Q-1MV2",
+      "footprint": "RF_Module:Raytac_MDBT50Q-1MV2",
+      "description": "nRF52840 BLE module for low-power sensor nodes.",
+      "supplier": "Nordic/Raytac",
+      "lcsc_part": "",
+      "package": "SMD module",
+      "jlc_assembly": "manual",
+      "alternatives": [
+        "E73-2G4M08S1C",
+        "MS88SF2"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "required_power_pins": [
+        "VDD",
+        "GND"
+      ],
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 2,
+          "net": "+3V3"
+        },
+        {
+          "value": "4.7uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ],
+      "interfaces": {
+        "i2c": [
+          {
+            "scl": "P0.27",
+            "sda": "P0.26"
+          }
+        ],
+        "uart": [
+          {
+            "tx": "P0.06",
+            "rx": "P0.08"
+          }
+        ],
+        "spi": [
+          {
+            "sck": "P0.14",
+            "mosi": "P0.13",
+            "miso": "P0.15",
+            "cs": "P0.12"
+          }
+        ]
+      },
+      "reserved_pins": [
+        "VDD",
+        "GND",
+        "SWDIO",
+        "SWDCLK",
+        "RESET"
+      ]
+    },
+    "SX1262_MODULE": {
+      "kind": "radio_module",
+      "symbol": "RF_Module:SX1262_Module_Generic",
+      "footprint": "RF_Module:SX1262_Module_Generic",
+      "description": "Generic SX1262 LoRa module, SPI interface with DIO/RESET/BUSY pins.",
+      "supplier": "LCSC/JLCPCB",
+      "lcsc_part": "",
+      "package": "SMD module",
+      "jlc_assembly": "manual",
+      "alternatives": [
+        "E22-900M22S",
+        "RA-01SH"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "required_power_pins": [
+        "VCC",
+        "GND"
+      ],
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 1,
+          "net": "+3V3"
+        },
+        {
+          "value": "10uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ],
+      "interfaces": {
+        "spi": {
+          "sck": "SCK",
+          "mosi": "MOSI",
+          "miso": "MISO",
+          "cs": "NSS",
+          "dio1": "DIO1",
+          "busy": "BUSY",
+          "reset": "RESET"
+        }
+      }
+    },
+    "SHT31-DIS": {
+      "kind": "sensor",
+      "symbol": "Sensor:SHT31-DIS",
+      "footprint": "Package_DFN_QFN:DFN-8-1EP_2x2mm_P0.5mm_EP0.9x1.5mm",
+      "description": "I2C temperature and humidity sensor.",
+      "supplier": "Sensirion/LCSC",
+      "lcsc_part": "C92024",
+      "package": "DFN-8",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "SHT30-DIS",
+        "SHTC3"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "interfaces": {
+        "i2c": {
+          "scl": "SCL",
+          "sda": "SDA",
+          "address": "0x44"
+        }
+      },
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ]
+    },
+    "BME280": {
+      "kind": "sensor",
+      "symbol": "Sensor:BME280",
+      "footprint": "Package_LGA:Bosch_LGA-8_2.5x2.5mm_P0.65mm",
+      "description": "I2C/SPI environmental sensor.",
+      "supplier": "Bosch/LCSC",
+      "lcsc_part": "C92489",
+      "package": "LGA-8",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "BMP280",
+        "SPL06-001"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "interfaces": {
+        "i2c": {
+          "scl": "SCL",
+          "sda": "SDA",
+          "address": "0x76"
+        }
+      },
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ]
+    },
+    "USB-C-16P": {
+      "kind": "connector",
+      "symbol": "Connector:USB_C_Receptacle_USB2.0",
+      "footprint": "Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12",
+      "description": "USB-C receptacle, USB2.0 and 5V input.",
+      "supplier": "Korean Hroparts/LCSC",
+      "lcsc_part": "C165948",
+      "package": "USB-C-SMD",
+      "jlc_assembly": "basic",
+      "alternatives": [
+        "TYPE-C-31-M-12",
+        "TYPE-C-16PIN-2MD"
+      ],
+      "required_passives": [
+        {
+          "net": "CC1",
+          "to": "GND",
+          "value": "5.1k",
+          "purpose": "Rd"
+        },
+        {
+          "net": "CC2",
+          "to": "GND",
+          "value": "5.1k",
+          "purpose": "Rd"
+        }
+      ]
+    },
+    "TLV75533PDBVR": {
+      "kind": "ldo",
+      "symbol": "Regulator_Linear:TLV75533PDBVR",
+      "footprint": "Package_TO_SOT_SMD:SOT-23-5",
+      "description": "500mA low-Iq 3.3V LDO.",
+      "supplier": "TI/LCSC",
+      "lcsc_part": "C485517",
+      "package": "SOT-23-5",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "ME6211C33M5G",
+        "XC6206P332MR"
+      ],
+      "input_voltage_max": 5.5,
+      "output_voltage": 3.3,
+      "output_current_ma": 500,
+      "required_caps": [
+        {
+          "value": "1uF",
+          "net": "+VBUS",
+          "purpose": "input"
+        },
+        {
+          "value": "1uF",
+          "net": "+3V3",
+          "purpose": "output"
+        }
+      ]
+    },
+    "MCP73831": {
+      "kind": "charger",
+      "symbol": "Battery_Management:MCP73831-2-OT",
+      "footprint": "Package_TO_SOT_SMD:SOT-23-5",
+      "description": "Single-cell Li-ion/LiPo linear charger.",
+      "supplier": "Microchip/LCSC",
+      "lcsc_part": "C14879",
+      "package": "SOT-23-5",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "TP4054",
+        "ETA4054"
+      ],
+      "required_caps": [
+        {
+          "value": "4.7uF",
+          "net": "+VBUS",
+          "purpose": "charger input"
+        },
+        {
+          "value": "4.7uF",
+          "net": "+BATT",
+          "purpose": "charger battery"
+        }
+      ]
+    },
+    "JST-PH-2": {
+      "kind": "connector",
+      "symbol": "Connector_Generic:Conn_01x02",
+      "footprint": "Connector_JST:JST_PH_S2B-PH-SM4-TB_1x02-1MP_P2.00mm_Horizontal",
+      "description": "2-pin JST-PH battery connector.",
+      "supplier": "JST/LCSC",
+      "lcsc_part": "C265981",
+      "package": "JST-PH-2",
+      "jlc_assembly": "manual",
+      "alternatives": [
+        "HY2.0-2P"
+      ]
+    },
+    "USBLC6-2SC6": {
+      "kind": "protection",
+      "symbol": "Power_Protection:USBLC6-2SC6",
+      "footprint": "Package_TO_SOT_SMD:SOT-23-6",
+      "description": "USB data-line ESD protection.",
+      "supplier": "ST/LCSC",
+      "lcsc_part": "C7519",
+      "package": "SOT-23-6",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "SRV05-4",
+        "ESD9M5V"
+      ]
+    },
+    "U.FL": {
+      "kind": "rf_connector",
+      "symbol": "Connector:Conn_Coaxial",
+      "footprint": "Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT-1_Vertical",
+      "description": "U.FL RF connector for conducted RF test or external antenna.",
+      "supplier": "Hirose/LCSC",
+      "lcsc_part": "C88374",
+      "package": "U.FL-SMD",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "IPEX-MHF1"
+      ]
+    },
+    "PCB_ANT_2G4": {
+      "kind": "antenna",
+      "symbol": "Device:Antenna",
+      "footprint": "Antenna:PCB_Antenna_2.4GHz_Generic",
+      "description": "Generic 2.4GHz PCB antenna placeholder; tune in PCB/EM phase.",
+      "supplier": "PCB copper",
+      "lcsc_part": "",
+      "package": "PCB",
+      "jlc_assembly": "not_applicable",
+      "alternatives": [
+        "U.FL external antenna",
+        "chip antenna"
+      ]
+    },
+    "R_0402": {
+      "kind": "passive",
+      "symbol": "Device:R",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "supplier": "LCSC",
+      "lcsc_part": "C11702",
+      "package": "0402",
+      "jlc_assembly": "basic"
+    },
+    "C_0402": {
+      "kind": "passive",
+      "symbol": "Device:C",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "supplier": "LCSC",
+      "lcsc_part": "C1525",
+      "package": "0402",
+      "jlc_assembly": "basic"
+    },
+    "L_0402": {
+      "kind": "passive",
+      "symbol": "Device:L",
+      "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "supplier": "LCSC",
+      "lcsc_part": "C17414",
+      "package": "0402",
+      "jlc_assembly": "extended"
+    },
+    "LED_0603": {
+      "kind": "indicator",
+      "symbol": "Device:LED",
+      "footprint": "LED_SMD:LED_0603_1608Metric",
+      "supplier": "LCSC",
+      "lcsc_part": "C72043",
+      "package": "0603",
+      "jlc_assembly": "basic"
+    },
+    "SW_PUSH": {
+      "kind": "switch",
+      "symbol": "Switch:SW_Push",
+      "footprint": "Button_Switch_SMD:SW_SPST_EVQP0",
+      "supplier": "Panasonic/LCSC",
+      "lcsc_part": "",
+      "package": "SMD switch",
+      "jlc_assembly": "manual"
+    },
+    "HEADER_1X04": {
+      "kind": "connector",
+      "symbol": "Connector_Generic:Conn_01x04",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
+      "supplier": "LCSC",
+      "lcsc_part": "",
+      "package": "2.54mm header",
+      "jlc_assembly": "manual"
+    },
+    "HEADER_1X06": {
+      "kind": "connector",
+      "symbol": "Connector_Generic:Conn_01x06",
+      "footprint": "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
+      "supplier": "LCSC",
+      "lcsc_part": "",
+      "package": "2.54mm header",
+      "jlc_assembly": "manual"
+    },
+    "BMI088": {
+      "kind": "sensor",
+      "symbol": "Sensor:BMI088",
+      "footprint": "Package_LGA:BMI088",
+      "description": "6-axis IMU (3-axis gyro + 3-axis accel) via SPI.",
+      "supplier": "Bosch/LCSC",
+      "lcsc_part": "C2944707",
+      "package": "LGA-16",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "BMI088"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "interfaces": {
+        "spi": {
+          "sck": "SCK",
+          "mosi": "MOSI",
+          "miso": "MISO",
+          "cs": "CS",
+          "int1": "INT1",
+          "int2": "INT2"
+        }
+      },
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 2,
+          "net": "+3V3"
+        },
+        {
+          "value": "10uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ]
+    },
+    "QMC5883L": {
+      "kind": "sensor",
+      "symbol": "Sensor:QMC5883L",
+      "footprint": "Package_LGA:QMC5883L",
+      "description": "3-axis magnetometer via I2C.",
+      "supplier": "QST/LCSC",
+      "lcsc_part": "C347200",
+      "package": "LGA-16",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "HMC5883L"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "interfaces": {
+        "i2c": {
+          "scl": "SCL",
+          "sda": "SDA",
+          "address": "0x0D"
+        }
+      },
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 1,
+          "net": "+3V3"
+        },
+        {
+          "value": "4.7uF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ]
+    },
+    "BMP280": {
+      "kind": "sensor",
+      "symbol": "Sensor:BMP280",
+      "footprint": "Package_LGA:Bosch_LGA-8_2.5x2.5mm_P0.65mm",
+      "description": "Barometer and temperature sensor via I2C/SPI.",
+      "supplier": "Bosch/LCSC",
+      "lcsc_part": "C1989668",
+      "package": "LGA-8",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "BME280"
+      ],
+      "supply_nets": [
+        "+3V3"
+      ],
+      "interfaces": {
+        "i2c": {
+          "scl": "SCL",
+          "sda": "SDA",
+          "address": "0x76"
+        }
+      },
+      "decoupling": [
+        {
+          "value": "100nF",
+          "qty": 1,
+          "net": "+3V3"
+        }
+      ]
+    },
+    "MP2940": {
+      "kind": "dc_dc",
+      "symbol": "Regulator_Switching:MP2940",
+      "footprint": "Package_SOIC:SOP-8_EP",
+      "description": "3A synchronous buck regulator, 5V output for motor power rail.",
+      "supplier": "Monolithic Power Systems/LCSC",
+      "lcsc_part": "C96694",
+      "package": "SOP-8-EP",
+      "jlc_assembly": "extended",
+      "alternatives": [
+        "MP9943"
+      ],
+      "input_voltage_max": 18,
+      "output_voltage": 5.0,
+      "output_current_ma": 3000,
+      "required_caps": [
+        {
+          "value": "22uF",
+          "net": "+VBAT",
+          "purpose": "input"
+        },
+        {
+          "value": "22uF",
+          "net": "+5V",
+          "purpose": "output"
+        }
+      ]
+    }
+  }
+}

@@ -13,6 +13,7 @@ It helps with:
 
 - MCU and peripheral selection
 - schematic and PCB guidance
+- project spec validation before EDA generation
 - firmware scaffolding and driver code
 - UART, SPI, I2C, CAN, USB, and custom protocol design
 - RF topics such as microstrip, CPWG, antenna matching, and Smith chart based tuning
@@ -24,6 +25,12 @@ It helps with:
 - `scripts/`: reusable calculators and generators
 - `mcp/`: local MCP helpers used by the skill
 - `workflows/`: task-specific engineering workflows
+
+Important references:
+
+- `references/claude-code-usage.md`
+- `references/eda-toolchain.md`
+- `references/requirements-to-spec.md`
 
 ## Using the skill
 

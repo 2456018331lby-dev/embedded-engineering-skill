@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "project_name": "esp32_s3_multisensor_node",
+  "description": "ESP32-S3 USB-powered multisensor node with USB-C, 3.3V LDO, two I2C sensors, debug header, reset/boot controls, and status LED.",
+  "input_power": {
+    "source": "usb_c",
+    "voltage": 5.0,
+    "net": "+VBUS",
+    "esd_protection": true
+  },
+  "power": {
+    "main_regulator": "TLV75533PDBVR",
+    "rails": [
+      {
+        "name": "+3V3",
+        "voltage": 3.3,
+        "current_ma": 350,
+        "source": "TLV75533PDBVR"
+      }
+    ]
+  },
+  "mcu": "ESP32-S3-WROOM-1",
+  "sensors": [
+    {
+      "part": "SHT31-DIS",
+      "interface": "i2c",
+      "ref": "U3"
+    },
+    {
+      "part": "BME280",
+      "interface": "i2c",
+      "ref": "U6"
+    }
+  ],
+  "debug": {
+    "uart_header": true,
+    "boot_button": false,
+    "reset_button": true
+  },
+  "rf": {
+    "enabled": false
+  },
+  "indicators": [
+    {
+      "name": "STATUS",
+      "color": "green",
+      "gpio": "GPIO4"
+    }
+  ]
+}

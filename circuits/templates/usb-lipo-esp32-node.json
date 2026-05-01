@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "project_name": "usb_lipo_esp32_node",
+  "description": "ESP32-C3 sensor node with USB-C input, single-cell LiPo charger, battery connector, battery-fed 3.3V LDO, I2C sensor, and RF antenna path.",
+  "input_power": {
+    "source": "usb_c",
+    "voltage": 5.0,
+    "net": "+VBUS",
+    "esd_protection": true,
+    "battery": "lipo_1s",
+    "charger": "MCP73831",
+    "charge_prog_resistor": "10k"
+  },
+  "power": {
+    "main_regulator": "TLV75533PDBVR",
+    "regulator_input_net": "+BATT",
+    "rails": [
+      {
+        "name": "+3V3",
+        "voltage": 3.3,
+        "current_ma": 250,
+        "source": "TLV75533PDBVR"
+      }
+    ]
+  },
+  "mcu": "ESP32-C3-MINI-1",
+  "sensors": [
+    {
+      "part": "SHT31-DIS",
+      "interface": "i2c",
+      "ref": "U3"
+    }
+  ],
+  "debug": {
+    "uart_header": true,
+    "boot_button": false,
+    "reset_button": true
+  },
+  "rf": {
+    "enabled": true,
+    "antenna": "PCB_ANT_2G4",
+    "matching": "pi_placeholder",
+    "test_connector": "U.FL"
+  },
+  "indicators": [
+    {
+      "name": "STATUS",
+      "color": "green",
+      "gpio": "GPIO3"
+    }
+  ]
+}

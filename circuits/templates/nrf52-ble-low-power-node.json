@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "project_name": "nrf52_ble_low_power_node",
+  "description": "nRF52840 BLE low-power environmental sensor node with USB-C 5V input, 3.3V LDO, I2C sensor, UART debug, and status LED.",
+  "input_power": {
+    "source": "usb_c",
+    "voltage": 5.0,
+    "net": "+VBUS",
+    "esd_protection": true
+  },
+  "power": {
+    "main_regulator": "TLV75533PDBVR",
+    "rails": [
+      {"name": "+3V3", "voltage": 3.3, "current_ma": 80, "source": "TLV75533PDBVR"}
+    ]
+  },
+  "mcu": "NRF52840-MODULE",
+  "sensors": [
+    {"part": "SHT31-DIS", "interface": "i2c", "ref": "U3"}
+  ],
+  "debug": {
+    "uart_header": true,
+    "boot_button": false,
+    "reset_button": true
+  },
+  "rf": {
+    "enabled": false
+  },
+  "indicators": [
+    {"name": "STATUS", "color": "green", "gpio": "P0.11"}
+  ]
+}

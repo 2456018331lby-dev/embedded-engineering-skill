@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "project_name": "lora_sx1262_sensor_node",
+  "description": "ESP32-C3 + SX1262 LoRa sensor node with USB-C input, 3.3V LDO, SHT31 I2C sensor, SPI LoRa module, U.FL RF path, and pi matching placeholders.",
+  "input_power": {
+    "source": "usb_c",
+    "voltage": 5.0,
+    "net": "+VBUS",
+    "esd_protection": true
+  },
+  "power": {
+    "main_regulator": "TLV75533PDBVR",
+    "rails": [
+      {
+        "name": "+3V3",
+        "voltage": 3.3,
+        "current_ma": 450,
+        "source": "TLV75533PDBVR"
+      }
+    ]
+  },
+  "mcu": "ESP32-C3-MINI-1",
+  "sensors": [
+    {
+      "part": "SHT31-DIS",
+      "interface": "i2c",
+      "ref": "U3"
+    }
+  ],
+  "radio_modules": [
+    {
+      "part": "SX1262_MODULE",
+      "ref": "U6",
+      "interface": "spi",
+      "rf_net": "RF_FEED",
+      "gpio": {
+        "dio1": "GPIO1",
+        "busy": "GPIO0",
+        "reset": "GPIO3"
+      }
+    }
+  ],
+  "debug": {
+    "uart_header": true,
+    "boot_button": false,
+    "reset_button": true
+  },
+  "rf": {
+    "enabled": true,
+    "antenna": "PCB_ANT_2G4",
+    "matching": "pi_placeholder",
+    "test_connector": "U.FL"
+  },
+  "indicators": []
+}
