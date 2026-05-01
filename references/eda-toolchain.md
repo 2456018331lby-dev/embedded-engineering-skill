@@ -1,39 +1,79 @@
-# EDA Toolchain Strategy
+# EDA Toolchain Reference
 
-## Recommendation
+## Dual-Track Pipeline
 
-Use a dual-track pipeline:
+Source of truth: `project.netlist.json`. All other artifacts derive from it.
 
-1. **KiCad as the automation verifier** when `kicad-cli` is available.
-   - Public CLI supports schematic ERC and schematic export.
-   - File formats are documented and text-based.
-   - Good fit for repeatable machine validation.
-   - Current generator emits pin-level review schematics with embedded custom symbols, net-label stubs, and BOM/footprint properties.
+### Track A: KiCad (automation + verification)
+- Generate `.kicad_sch` (pin-level review schematic) from netlist
+- Run `kicad-cli` for ERC and SVG export when available
+- Open `.kicad_sch` in KiCad → assign manufacturer symbols/footprints → design PCB → export Gerber/drills → upload to JLCPCB
 
-2. **EasyEDA/JLCEDA Standard as the manufacturing-facing export**.
-   - Standard documents are JSON-based and can be generated.
-   - Fits JLC/LCSC/JLCPCB downstream workflows.
-   - Current exporter generates a review schematic; official JLCEDA checks still require importing into the editor.
+### Track B: EasyEDA/JLCEDA (JLCPCB-native flow)
+- Generate `.easyeda.json` from netlist (JSON-based, machine-generable)
+- Import into 嘉立创EDA (JLCEDA Standard) → layout PCB → export Gerber → upload to JLCPCB
 
-Keep `project.netlist.json` as the source of truth. Generate KiCad, EasyEDA, BOM, pinmap, and previews from it.
+## Key Scripts
 
-## Practical Completion Levels
+```
+scripts/eda/validate_project_spec.py --spec <path>         # Validate project spec JSON
+scripts/eda/gen_kicad_project.py --spec <path> --out <dir> # Generate KiCad project + schematic
+scripts/eda/gen_easyeda_std.py --spec <path> --out <dir>   # Generate EasyEDA JSON
+scripts/eda/validate_eda_outputs.py --project <dir>        # Run static ERC + KiCad CLI ERC if available
+scripts/eda/render_design_preview.py --project <dir>       # Generate HTML/SVG previews
+scripts/eda/gen_jlc_package.py --manifest <path>           # Generate JLC BOM, CPL, assembly report
+```
 
-- **Static-ready**: `project.netlist.json`, BOM, pinmap, HTML/SVG preview, EasyEDA JSON, and static ERC all pass.
-- **KiCad-verified**: `validate_eda_outputs.py` finds `kicad-cli` and runs official KiCad ERC/export against the generated pin-level `.kicad_sch`.
-- **JLCEDA-verified**: generated EasyEDA/JLCEDA file is imported into JLCEDA and passes its official checks.
+## Completion Levels
 
-## Current Boundary
+| Level | Criteria |
+|-------|----------|
+| Static-ready | netlist + BOM + pinmap + preview + EasyEDA JSON + static ERC pass |
+| KiCad-verified | `kicad-cli` ran official ERC on generated `.kicad_sch` |
+| JLCEDA-verified | Generated EasyEDA file imported into JLCEDA and passed its checks |
 
-Do not claim official KiCad or JLCEDA ERC unless the corresponding tool has run. Static ERC is useful but not a substitute for official EDA checks.
+## Workflow: Design → Manufacturing
 
-KiCad automation is now stronger than the EasyEDA exporter: it can generate a pin-level labelled schematic, run KiCad CLI ERC, and export KiCad-rendered SVG. The EasyEDA/JLCEDA export remains a review/import artifact until native symbol-level EasyEDA generation and official JLCEDA validation are added.
+1. User requirement → `project.netlist.json` (adapt from `circuits/templates/*.json`)
+2. `validate_project_spec.py` → fix spec errors
+3. `gen_kicad_project.py` → `.kicad_pro` + `.kicad_sch` + `.kicad_pcb` skeleton
+4. `validate_eda_outputs.py` → static ERC + KiCad CLI ERC (if available)
+5. `gen_jlc_package.py` → `jlc_bom.csv` + `jlc_cpl.csv` + assembly report
+6. Open `.kicad_sch` in KiCad → complete PCB layout → DRC → export Gerber → JLCPCB
 
-For production release, replace or bind the embedded review symbols to team-approved manufacturer symbols/footprints where required, then rerun KiCad ERC, footprint assignment checks, PCB DRC, and the target fab's official checks.
+Or for EasyEDA flow:
+1-2. Same as above
+3. `gen_easyeda_std.py` → `.easyeda.json`
+4. Import into 嘉立创EDA → layout → export Gerber → JLCPCB
+
+## Output Files
+
+```
+<project>/
+├── *.kicad_pro, *.kicad_sch, *.kicad_pcb   # KiCad project
+├── *.easyeda.json                            # EasyEDA import file
+├── project.netlist.json                      # Source of truth
+├── bom.csv                                   # Generic BOM
+├── pinmap.csv                                # MCU pin assignment
+├── jlc_bom.csv, jlc_cpl.csv                 # JLCPCB assembly files
+├── jlc_assembly_report.md/.json              # Assembly review
+├── static_erc.md                             # Static ERC results
+├── eda_validation.md                         # Validation summary
+├── production_readiness.md                   # Manufacturing gate
+├── pcb_constraints.md                        # Placement/routing guide
+├── schematic_preview.html/.svg               # Browser-viewable preview
+└── spec_validation.json/.md                  # Spec validation
+```
+
+## Boundaries
+
+- Static ERC ≠ official KiCad/JLCEDA ERC. Only claim "verified" if the tool actually ran.
+- Generated schematics are review artifacts. Before fabrication: bind ICs to manufacturer symbols, complete PCB layout, run DRC, export Gerbers.
+- Review `jlc_cpl.csv` manually — it comes from auto-placement, not a finished layout.
 
 ## References
 
-- EasyEDA Document Format: https://docs.easyeda.com/en/DocumentFormat/EasyEDA-Document-Format/index.html
-- EasyEDA Schematic File Format: https://docs.easyeda.com/en/DocumentFormat/2-EasyEDA-Schematic-File-Format/index.html
-- KiCad EasyEDA import format notes: https://dev-docs.kicad.org/en/import-formats/easyeda/index.html
-- KiCad CLI documentation: https://docs.kicad.org/8.0/en/cli/cli.html
+- EasyEDA format: https://docs.easyeda.com/en/DocumentFormat/EasyEDA-Document-Format/index.html
+- EasyEDA schematic format: https://docs.easyeda.com/en/DocumentFormat/2-EasyEDA-Schematic-File-Format/index.html
+- KiCad EasyEDA import: https://dev-docs.kicad.org/en/import-formats/easyeda/index.html
+- KiCad CLI: https://docs.kicad.org/8.0/en/cli/cli.html

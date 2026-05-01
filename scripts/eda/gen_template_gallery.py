@@ -128,7 +128,7 @@ def main() -> int:
 
     args.out.mkdir(parents=True, exist_ok=True)
     projects: list[dict[str, Any]] = []
-    for spec_path in sorted(args.templates.glob("*.json")):
+    for spec_path in sorted(p for p in args.templates.glob("*.json") if "spec_validation" not in p.name):
         name = spec_path.stem
         project_dir = args.out / name
         result = generate_project(spec_path, args.library, project_dir, name)
