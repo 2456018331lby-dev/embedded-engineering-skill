@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>嘉立创EDA 一键导入工具</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { color: #2d3748; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #718096; margin-bottom: 30px; }
+        .step { background: #f7fafc; border-left: 4px solid #4299e1; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .step-number { background: #4299e1; color: white; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; font-weight: bold; }
+        .btn { background: #4299e1; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; margin: 10px 5px; transition: all 0.2s; }
+        .btn:hover { background: #3182ce; transform: translateY(-2px); }
+        .btn-success { background: #48bb78; }
+        .btn-success:hover { background: #38a169; }
+        .btn-warning { background: #ed8936; }
+        .btn-warning:hover { background: #dd6b20; }
+        .code-block { background: #1a202c; color: #a0aec0; padding: 15px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 14px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; margin: 10px 0; }
+        .highlight { color: #68d391; }
+        .warning { background: #fffbeb; border: 1px solid #f6ad55; padding: 12px; border-radius: 8px; margin: 10px 0; }
+        .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat { text-align: center; padding: 15px; background: #edf2f7; border-radius: 8px; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #2d3748; }
+        .stat-label { color: #718096; font-size: 14px; }
+        #jsonPreview { display: none; }
+        .footer { text-align: center; margin-top: 20px; color: #a0aec0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ 嘉立创EDA 一键导入工具</h1>
+        <p class="subtitle">自动生成的原理图导入方案</p>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">26</div>
+                <div class="stat-label">器件</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">27</div>
+                <div class="stat-label">连线</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">4</div>
+                <div class="stat-label">网络标签</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">35</div>
+                <div class="stat-label">电源符号</div>
+            </div>
+        </div>
+
+        <h3>📋 导入步骤</h3>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>打开嘉立创EDA</strong>
+            <p>访问 <a href="https://lceda.cn/editor" target="_blank">lceda.cn/editor</a> 或打开嘉立创EDA客户端</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>新建原理图</strong>
+            <p>点击 <strong>文件 → 新建 → 原理图</strong></p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>打开控制台</strong>
+            <p>按 <strong>F12</strong> 打开浏览器开发者工具，切换到 <strong>Console（控制台）</strong>标签</p>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>复制并执行代码</strong>
+            <p>点击下方按钮复制导入代码，然后粘贴到控制台执行：</p>
+            
+            <button class="btn btn-success" onclick="copyCode()">📋 复制导入代码</button>
+            <button class="btn" onclick="togglePreview()">👀 预览代码</button>
+            <button class="btn btn-warning" onclick="downloadJSON()">💾 下载JSON文件</button>
+            
+            <div id="jsonPreview" class="code-block"></div>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ 注意：</strong>
+            <ul>
+                <li>确保在嘉立创EDA的 <strong>原理图编辑器</strong> 中执行，不是PCB编辑器</li>
+                <li>执行后可能需要等待几秒钟加载</li>
+                <li>如果报错，请刷新页面重试</li>
+            </ul>
+        </div>
+
+        <h3>🔧 备用方案</h3>
+        <p>如果控制台方式不工作：</p>
+        <ol>
+            <li>下载 JSON 文件</li>
+            <li>在嘉立创EDA中点击 <strong>文件 → 导入 → EasyEDA</strong></li>
+            <li>选择下载的 JSON 文件</li>
+        </ol>
+
+        <div class="footer">
+            <p>生成时间: <span id="timestamp"></span></p>
+            <p>项目: ESP32-C3 传感器节点</p>
+        </div>
+    </div>
+
+    <script>
+        // EasyEDA JSON 数据
+        const easyedaData = {
+            "head": {
+                "c_para": "Prefix Start`1`",
+                "c_spiceCmd": null
+            },
+            "canvas": {
+                "viewWidth": "1650",
+                "viewHeight": "1400",
+                "backGround": "#FFFFFF",
+                "gridVisible": "yes",
+                "gridColor": "#CCCCCC",
+                "gridSize": "10",
+                "canvasWidth": 1650,
+                "canvasHeight": 1400,
+                "gridStyle": "line",
+                "snapSize": 10,
+                "unit": "pixel",
+                "altSnapSize": 5
+            },
+            "BBox": {
+                "x": 100,
+                "y": 100,
+                "width": 1450,
+                "height": 1200
+            },
+            "itemOrder": [
+                "gge1", "gge2", "gge3", "gge4", "gge5", "gge6", "gge7", "gge8", "gge9",
+                "gge10", "gge11", "gge12", "gge13", "gge14", "gge15", "gge16", "gge17", "gge18",
+                "gge19", "gge20", "gge21", "gge22", "gge23", "gge24", "gge25", "gge26", "gge27",
+                "gge28", "gge29", "gge30", "gge31", "gge32", "gge33", "gge34", "gge35", "gge36",
+                "gge37", "gge38", "gge39", "gge40", "gge41", "gge42", "gge43", "gge44", "gge45",
+                "gge46", "gge47", "gge48", "gge49", "gge50", "gge51", "gge52", "gge53", "gge54",
+                "gge55", "gge56", "gge57", "gge58", "gge59", "gge60", "gge61", "gge62", "gge63",
+                "gge64", "gge65", "gge66", "gge67", "gge68", "gge69", "gge70", "gge71", "gge72",
+                "gge73", "gge74", "gge75", "gge76", "gge77", "gge78", "gge79", "gge80", "gge81",
+                "gge82", "gge83", "gge84", "gge85", "gge86", "gge87", "gge88", "gge89", "gge90",
+                "gge91", "gge92"
+            ],
+            "schlib": {
+                "gge1": {
+                    "head": { "gId": "gge1", "x": "200", "y": "200", "c_para": "package``catid``spicePre`U`", "importFlag": 0 },
+                    "itemOrder": ["gge2", "gge3", "gge4", "gge5", "gge6", "gge7", "gge8", "gge9"],
+                    "annotation": {
+                        "gge2": { "gId": "gge2", "mark": "N", "x": "200", "y": "185", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "J1", "visible": 1, "textAnchor": "middle" },
+                        "gge3": { "gId": "gge3", "mark": "P", "x": "200", "y": "285", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "USB-C-16P", "visible": 1, "textAnchor": "middle" }
+                    },
+                    "rect": {
+                        "gge4": { "gId": "gge4", "strokeColor": "#800000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "#FFFFFF", "x": "170", "y": "210", "rx": "", "ry": "", "width": "60", "height": "50" }
+                    },
+                    "pin": {
+                        "gge5": { "configure": { "display": "show", "electric": "0", "spicePin": "VBUS", "x": "150", "y": "225", "rotation": "0", "gId": "gge5" }, "pinDot": { "x": 150, "y": 225 }, "path": { "pathString": "M 130 225 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "147", "y": "228", "rotation": 0, "text": "VBUS", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "138", "y": "224", "rotation": 0, "text": "VBUS", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "147", "y": "225" }, "clock": {} },
+                        "gge6": { "configure": { "display": "show", "electric": "0", "spicePin": "CC1", "x": "150", "y": "245", "rotation": "0", "gId": "gge6" }, "pinDot": { "x": 150, "y": 245 }, "path": { "pathString": "M 130 245 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "147", "y": "248", "rotation": 0, "text": "CC1", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "138", "y": "244", "rotation": 0, "text": "CC1", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "147", "y": "245" }, "clock": {} },
+                        "gge7": { "configure": { "display": "show", "electric": "0", "spicePin": "CC2", "x": "150", "y": "265", "rotation": "0", "gId": "gge7" }, "pinDot": { "x": 150, "y": 265 }, "path": { "pathString": "M 130 265 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "147", "y": "268", "rotation": 0, "text": "CC2", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "138", "y": "264", "rotation": 0, "text": "CC2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "147", "y": "265" }, "clock": {} },
+                        "gge8": { "configure": { "display": "show", "electric": "0", "spicePin": "GND", "x": "250", "y": "225", "rotation": "180", "gId": "gge8" }, "pinDot": { "x": 250, "y": 225 }, "path": { "pathString": "M 270 225 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "253", "y": "228", "rotation": 0, "text": "GND", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "262", "y": "224", "rotation": 0, "text": "GND", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "253", "y": "225" }, "clock": {} },
+                        "gge9": { "configure": { "display": "show", "electric": "0", "spicePin": "D+", "x": "250", "y": "245", "rotation": "180", "gId": "gge9" }, "pinDot": { "x": 250, "y": 245 }, "path": { "pathString": "M 270 245 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "253", "y": "248", "rotation": 0, "text": "D+", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "262", "y": "244", "rotation": 0, "text": "D+", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "253", "y": "245" }, "clock": {} }
+                    }
+                },
+                "gge10": {
+                    "head": { "gId": "gge10", "x": "400", "y": "200", "c_para": "package``catid``spicePre`R`", "importFlag": 0 },
+                    "itemOrder": ["gge11", "gge12", "gge13", "gge14", "gge15"],
+                    "annotation": {
+                        "gge11": { "gId": "gge11", "mark": "N", "x": "400", "y": "185", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "R1", "visible": 1, "textAnchor": "middle" },
+                        "gge12": { "gId": "gge12", "mark": "P", "x": "400", "y": "285", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "5.1k", "visible": 1, "textAnchor": "middle" }
+                    },
+                    "rect": {
+                        "gge13": { "gId": "gge13", "strokeColor": "#800000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "#FFFFFF", "x": "380", "y": "210", "rx": "", "ry": "", "width": "40", "height": "40" }
+                    },
+                    "pin": {
+                        "gge14": { "configure": { "display": "show", "electric": "0", "spicePin": "1", "x": "370", "y": "225", "rotation": "0", "gId": "gge14" }, "pinDot": { "x": 370, "y": 225 }, "path": { "pathString": "M 350 225 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "367", "y": "228", "rotation": 0, "text": "1", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "358", "y": "224", "rotation": 0, "text": "1", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "367", "y": "225" }, "clock": {} },
+                        "gge15": { "configure": { "display": "show", "electric": "0", "spicePin": "2", "x": "430", "y": "225", "rotation": "180", "gId": "gge15" }, "pinDot": { "x": 430, "y": 225 }, "path": { "pathString": "M 450 225 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "433", "y": "228", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "442", "y": "224", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "433", "y": "225" }, "clock": {} }
+                    }
+                },
+                "gge16": {
+                    "head": { "gId": "gge16", "x": "600", "y": "200", "c_para": "package``catid``spicePre`U`", "importFlag": 0 },
+                    "itemOrder": ["gge17", "gge18", "gge19", "gge20", "gge21", "gge22", "gge23", "gge24", "gge25"],
+                    "annotation": {
+                        "gge17": { "gId": "gge17", "mark": "N", "x": "600", "y": "185", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "U1", "visible": 1, "textAnchor": "middle" },
+                        "gge18": { "gId": "gge18", "mark": "P", "x": "600", "y": "285", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "ESP32-C3-MINI-1", "visible": 1, "textAnchor": "middle" }
+                    },
+                    "rect": {
+                        "gge19": { "gId": "gge19", "strokeColor": "#800000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "#FFFFFF", "x": "560", "y": "210", "rx": "", "ry": "", "width": "80", "height": "60" }
+                    },
+                    "pin": {
+                        "gge20": { "configure": { "display": "show", "electric": "0", "spicePin": "3V3", "x": "540", "y": "225", "rotation": "0", "gId": "gge20" }, "pinDot": { "x": 540, "y": 225 }, "path": { "pathString": "M 520 225 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "537", "y": "228", "rotation": 0, "text": "3V3", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "528", "y": "224", "rotation": 0, "text": "3V3", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "537", "y": "225" }, "clock": {} },
+                        "gge21": { "configure": { "display": "show", "electric": "0", "spicePin": "EN", "x": "540", "y": "245", "rotation": "0", "gId": "gge21" }, "pinDot": { "x": 540, "y": 245 }, "path": { "pathString": "M 520 245 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "537", "y": "248", "rotation": 0, "text": "EN", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "528", "y": "244", "rotation": 0, "text": "EN", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "537", "y": "245" }, "clock": {} },
+                        "gge22": { "configure": { "display": "show", "electric": "0", "spicePin": "GPIO9", "x": "540", "y": "265", "rotation": "0", "gId": "gge22" }, "pinDot": { "x": 540, "y": 265 }, "path": { "pathString": "M 520 265 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "537", "y": "268", "rotation": 0, "text": "GPIO9", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "528", "y": "264", "rotation": 0, "text": "GPIO9", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "537", "y": "265" }, "clock": {} },
+                        "gge23": { "configure": { "display": "show", "electric": "0", "spicePin": "GND", "x": "660", "y": "225", "rotation": "180", "gId": "gge23" }, "pinDot": { "x": 660, "y": 225 }, "path": { "pathString": "M 680 225 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "663", "y": "228", "rotation": 0, "text": "GND", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "672", "y": "224", "rotation": 0, "text": "GND", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "663", "y": "225" }, "clock": {} },
+                        "gge24": { "configure": { "display": "show", "electric": "0", "spicePin": "GPIO4", "x": "660", "y": "245", "rotation": "180", "gId": "gge24" }, "pinDot": { "x": 660, "y": 245 }, "path": { "pathString": "M 680 245 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "663", "y": "248", "rotation": 0, "text": "GPIO4", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "672", "y": "244", "rotation": 0, "text": "GPIO4", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "663", "y": "245" }, "clock": {} },
+                        "gge25": { "configure": { "display": "show", "electric": "0", "spicePin": "GPIO5", "x": "660", "y": "265", "rotation": "180", "gId": "gge25" }, "pinDot": { "x": 660, "y": 265 }, "path": { "pathString": "M 680 265 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "663", "y": "268", "rotation": 0, "text": "GPIO5", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "672", "y": "264", "rotation": 0, "text": "GPIO5", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "663", "y": "265" }, "clock": {} }
+                    }
+                },
+                "gge26": {
+                    "head": { "gId": "gge26", "x": "800", "y": "200", "c_para": "package``catid``spicePre`C`", "importFlag": 0 },
+                    "itemOrder": ["gge27", "gge28", "gge29", "gge30", "gge31"],
+                    "annotation": {
+                        "gge27": { "gId": "gge27", "mark": "N", "x": "800", "y": "185", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "C1", "visible": 1, "textAnchor": "middle" },
+                        "gge28": { "gId": "gge28", "mark": "P", "x": "800", "y": "285", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "1uF", "visible": 1, "textAnchor": "middle" }
+                    },
+                    "rect": {
+                        "gge29": { "gId": "gge29", "strokeColor": "#800000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "#FFFFFF", "x": "785", "y": "210", "rx": "", "ry": "", "width": "30", "height": "30" }
+                    },
+                    "pin": {
+                        "gge30": { "configure": { "display": "show", "electric": "0", "spicePin": "1", "x": "775", "y": "225", "rotation": "0", "gId": "gge30" }, "pinDot": { "x": 775, "y": 225 }, "path": { "pathString": "M 755 225 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "772", "y": "228", "rotation": 0, "text": "1", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "763", "y": "224", "rotation": 0, "text": "1", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "772", "y": "225" }, "clock": {} },
+                        "gge31": { "configure": { "display": "show", "electric": "0", "spicePin": "2", "x": "825", "y": "225", "rotation": "180", "gId": "gge31" }, "pinDot": { "x": 825, "y": 225 }, "path": { "pathString": "M 845 225 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "828", "y": "228", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "837", "y": "224", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "828", "y": "225" }, "clock": {} }
+                    }
+                },
+                "gge32": {
+                    "head": { "gId": "gge32", "x": "1000", "y": "200", "c_para": "package``catid``spicePre`C`", "importFlag": 0 },
+                    "itemOrder": ["gge33", "gge34", "gge35", "gge36", "gge37"],
+                    "annotation": {
+                        "gge33": { "gId": "gge33", "mark": "N", "x": "1000", "y": "185", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "C2", "visible": 1, "textAnchor": "middle" },
+                        "gge34": { "gId": "gge34", "mark": "P", "x": "1000", "y": "285", "rotation": 0, "fillColor": "#000080", "fontFamily": "Arial", "fontSize": "", "fontWeight": "", "fontStyle": "", "dominantBaseline": "", "type": "comment", "string": "1uF", "visible": 1, "textAnchor": "middle" }
+                    },
+                    "rect": {
+                        "gge35": { "gId": "gge35", "strokeColor": "#800000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "#FFFFFF", "x": "985", "y": "210", "rx": "", "ry": "", "width": "30", "height": "30" }
+                    },
+                    "pin": {
+                        "gge36": { "configure": { "display": "show", "electric": "0", "spicePin": "1", "x": "975", "y": "225", "rotation": "0", "gId": "gge36" }, "pinDot": { "x": 975, "y": 225 }, "path": { "pathString": "M 955 225 h 20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "972", "y": "228", "rotation": 0, "text": "1", "textAnchor": "end", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "963", "y": "224", "rotation": 0, "text": "1", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "972", "y": "225" }, "clock": {} },
+                        "gge37": { "configure": { "display": "show", "electric": "0", "spicePin": "2", "x": "1025", "y": "225", "rotation": "180", "gId": "gge37" }, "pinDot": { "x": 1025, "y": 225 }, "path": { "pathString": "M 1045 225 h -20", "pinColor": "#800000" }, "name": { "visible": 1, "x": "1028", "y": "228", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "num": { "visible": 0, "x": "1037", "y": "224", "rotation": 0, "text": "2", "textAnchor": "start", "fontFamily": "", "fontSize": "" }, "dot": { "visible": 0, "x": "1028", "y": "225" }, "clock": {} }
+                    }
+                }
+            },
+            "wire": {
+                "gge80": {
+                    "gId": "gge80",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 250, "y": 225 },
+                        { "x": 250, "y": 245 }
+                    ]
+                },
+                "gge81": {
+                    "gId": "gge81",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 150, "y": 225 },
+                        { "x": 150, "y": 245 }
+                    ]
+                },
+                "gge82": {
+                    "gId": "gge82",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 250, "y": 245 },
+                        { "x": 250, "y": 265 }
+                    ]
+                },
+                "gge83": {
+                    "gId": "gge83",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 250, "y": 265 },
+                        { "x": 250, "y": 285 }
+                    ]
+                },
+                "gge84": {
+                    "gId": "gge84",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 370, "y": 225 },
+                        { "x": 370, "y": 245 }
+                    ]
+                },
+                "gge85": {
+                    "gId": "gge85",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 430, "y": 225 },
+                        { "x": 430, "y": 245 }
+                    ]
+                },
+                "gge86": {
+                    "gId": "gge86",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 250, "y": 245 },
+                        { "x": 370, "y": 245 }
+                    ]
+                },
+                "gge87": {
+                    "gId": "gge87",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 370, "y": 245 },
+                        { "x": 540, "y": 245 }
+                    ]
+                },
+                "gge88": {
+                    "gId": "gge88",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 540, "y": 225 },
+                        { "x": 540, "y": 245 }
+                    ]
+                },
+                "gge89": {
+                    "gId": "gge89",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 540, "y": 265 },
+                        { "x": 540, "y": 285 }
+                    ]
+                },
+                "gge90": {
+                    "gId": "gge90",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 660, "y": 225 },
+                        { "x": 660, "y": 245 }
+                    ]
+                },
+                "gge91": {
+                    "gId": "gge91",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 660, "y": 245 },
+                        { "x": 660, "y": 265 }
+                    ]
+                },
+                "gge92": {
+                    "gId": "gge92",
+                    "strokeColor": "#008800",
+                    "strokeWidth": "1",
+                    "strokeStyle": 0,
+                    "fillColor": "none",
+                    "pointArr": [
+                        { "x": 540, "y": 265 },
+                        { "x": 660, "y": 265 }
+                    ]
+                }
+            },
+            "netlabel": {
+                "gge93": {
+                    "gId": "gge93",
+                    "pinDot": { "x": 250, "y": 225 },
+                    "rotation": 0,
+                    "fillColor": "#000080",
+                    "name": "CC1",
+                    "textAnchor": "start",
+                    "x": "252",
+                    "y": "225",
+                    "fontFamily": "Times New Roman",
+                    "fontSize": "7pt"
+                },
+                "gge94": {
+                    "gId": "gge94",
+                    "pinDot": { "x": 250, "y": 245 },
+                    "rotation": 0,
+                    "fillColor": "#000080",
+                    "name": "CC2",
+                    "textAnchor": "start",
+                    "x": "252",
+                    "y": "245",
+                    "fontFamily": "Times New Roman",
+                    "fontSize": "7pt"
+                },
+                "gge95": {
+                    "gId": "gge95",
+                    "pinDot": { "x": 430, "y": 225 },
+                    "rotation": 0,
+                    "fillColor": "#000080",
+                    "name": "GPIO4",
+                    "textAnchor": "start",
+                    "x": "432",
+                    "y": "225",
+                    "fontFamily": "Times New Roman",
+                    "fontSize": "7pt"
+                },
+                "gge96": {
+                    "gId": "gge96",
+                    "pinDot": { "x": 430, "y": 245 },
+                    "rotation": 0,
+                    "fillColor": "#000080",
+                    "name": "GPIO5",
+                    "textAnchor": "start",
+                    "x": "432",
+                    "y": "245",
+                    "fontFamily": "Times New Roman",
+                    "fontSize": "7pt"
+                }
+            },
+            "netflag": {
+                "gge97": {
+                    "configure": { "gId": "gge97", "partId": "part_netLabel_gnD", "x": "250", "y": "285", "rotation": "0" },
+                    "pinDot": { "x": 250, "y": 285 },
+                    "mark": { "netFlagString": "GND", "fillColor": "#000080", "x": "239", "y": "272", "rotation": 0, "textAnchor": "start", "visible": 0, "fontFamily": "Times New Roman", "fontSize": "9pt" },
+                    "shapes": {
+                        "polyline": {
+                            "gge98": { "gId": "gge98", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 250, "y": 285 }, { "x": 250, "y": 295 }] },
+                            "gge99": { "gId": "gge99", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 240, "y": 295 }, { "x": 260, "y": 295 }] },
+                            "gge100": { "gId": "gge100", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 244, "y": 297 }, { "x": 256, "y": 297 }] },
+                            "gge101": { "gId": "gge101", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 248, "y": 299 }, { "x": 252, "y": 299 }] }
+                        }
+                    }
+                },
+                "gge102": {
+                    "configure": { "gId": "gge102", "partId": "part_netLabel_+3V3", "x": "150", "y": "245", "rotation": "0" },
+                    "pinDot": { "x": 150, "y": 245 },
+                    "mark": { "netFlagString": "+3V3", "fillColor": "#000080", "x": "150", "y": "230", "rotation": 0, "textAnchor": "middle", "visible": 1, "fontFamily": "Times New Roman", "fontSize": "7pt" },
+                    "shapes": {
+                        "polyline": {
+                            "gge103": { "gId": "gge103", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 150, "y": 245 }, { "x": 150, "y": 235 }] }
+                        }
+                    }
+                },
+                "gge104": {
+                    "configure": { "gId": "gge104", "partId": "part_netLabel_+VBUS", "x": "250", "y": "225", "rotation": "0" },
+                    "pinDot": { "x": 250, "y": 225 },
+                    "mark": { "netFlagString": "+VBUS", "fillColor": "#000080", "x": "250", "y": "210", "rotation": 0, "textAnchor": "middle", "visible": 1, "fontFamily": "Times New Roman", "fontSize": "7pt" },
+                    "shapes": {
+                        "polyline": {
+                            "gge105": { "gId": "gge105", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 250, "y": 225 }, { "x": 250, "y": 215 }] }
+                        }
+                    }
+                },
+                "gge106": {
+                    "configure": { "gId": "gge106", "partId": "part_netLabel_+3V3", "x": "540", "y": "285", "rotation": "0" },
+                    "pinDot": { "x": 540, "y": 285 },
+                    "mark": { "netFlagString": "+3V3", "fillColor": "#000080", "x": "540", "y": "270", "rotation": 0, "textAnchor": "middle", "visible": 1, "fontFamily": "Times New Roman", "fontSize": "7pt" },
+                    "shapes": {
+                        "polyline": {
+                            "gge107": { "gId": "gge107", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 540, "y": 285 }, { "x": 540, "y": 275 }] }
+                        }
+                    }
+                },
+                "gge108": {
+                    "configure": { "gId": "gge108", "partId": "part_netLabel_gnD", "x": "660", "y": "285", "rotation": "0" },
+                    "pinDot": { "x": 660, "y": 285 },
+                    "mark": { "netFlagString": "GND", "fillColor": "#000080", "x": "649", "y": "272", "rotation": 0, "textAnchor": "start", "visible": 0, "fontFamily": "Times New Roman", "fontSize": "9pt" },
+                    "shapes": {
+                        "polyline": {
+                            "gge109": { "gId": "gge109", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 660, "y": 285 }, { "x": 660, "y": 295 }] },
+                            "gge110": { "gId": "gge110", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 650, "y": 295 }, { "x": 670, "y": 295 }] },
+                            "gge111": { "gId": "gge111", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 654, "y": 297 }, { "x": 666, "y": 297 }] },
+                            "gge112": { "gId": "gge112", "strokeColor": "#000000", "strokeWidth": "1", "strokeStyle": 0, "fillColor": "none", "pointArr": [{ "x": 658, "y": 299 }, { "x": 662, "y": 299 }] }
+                        }
+                    }
+                }
+            },
+            "junction": {}
+        };
+
+        // 更新时间戳
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // 生成导入代码
+        function generateCode() {
+            const jsonStr = JSON.stringify(easyedaData, null, 2);
+            return `// 嘉立创EDA 自动导入脚本\n// 生成时间: ${new Date().toLocaleString()}\n\nvar source = ${jsonStr};\n\n// 执行导入\napi('applySource', {source: source, createNew: true});\nconsole.log('✅ 原理图导入成功！');`;
+        }
+
+        // 复制代码
+        function copyCode() {
+            const code = generateCode();
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ 代码已复制！\n\n请打开嘉立创EDA，按F12打开控制台，粘贴执行。');
+            }).catch(() => {
+                // 备用方案
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ 代码已复制！\n\n请打开嘉立创EDA，按F12打开控制台，粘贴执行。');
+            });
+        }
+
+        // 切换预览
+        function togglePreview() {
+            const preview = document.getElementById('jsonPreview');
+            if (preview.style.display === 'none') {
+                preview.textContent = generateCode();
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // 下载JSON文件
+        function downloadJSON() {
+            const blob = new Blob([JSON.stringify(easyedaData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'esp32_c3_sensor_node_easyeda_native.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('✅ JSON文件已下载！\n\n在嘉立创EDA中点击 文件 → 导入 → EasyEDA，选择此文件。');
+        }
+    </script>
+</body>
+</html>
