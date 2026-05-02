@@ -22,6 +22,7 @@ from typing import Any
 from erc_check import run_checks as run_static_erc
 from erc_check import write_markdown as write_static_erc_markdown
 from footprint_reader import get_footprint_for_component, is_footprint_available
+from symbol_reader import get_symbol_definition, get_lib_id_for_component, is_symbol_available
 from gen_easyeda_std import build_easyeda_document
 from gen_jlc_package import generate_jlc_package
 from render_design_preview import svg_for_manifest, write_html
@@ -439,6 +440,32 @@ def symbol_geometry(pin_count: int) -> tuple[float, float]:
 
 def write_custom_lib_symbol(lines: list[str], comp: dict[str, Any], pins: list[tuple[str, str]]) -> dict[str, Any]:
     ref = comp["ref"]
+    # Try to use standard KiCad library symbol
+    symbol_field = comp.get("symbol", "")
+    std_lib_id = get_lib_id_for_component(symbol_field) if symbol_field else ""
+    std_symbol = get_symbol_definition(std_lib_id) if std_lib_id else None
+
+    if std_symbol:
+        # Use real KiCad library symbol - embed the definition directly
+        # First remove the (kicad_lib ...) wrapper and just get the (symbol ...) block
+        lib_id = std_lib_id
+        # Add the symbol definition as-is to the lib_symbols section
+        lines.append(std_symbol)
+        # Extract pin locations from the real symbol for net label placement
+        left, right = split_symbol_pins(pins)
+        body_w, body_h = 20.0, max(len(left), len(right)) * 2.54 + 5.08  # estimate
+        pin_pitch = 2.54
+        top_y = body_h / 2 - 2.54
+        left_x = -body_w / 2 - 2.54
+        right_x = body_w / 2 + 2.54
+        pin_locations: dict[str, dict[str, Any]] = {}
+        for side, side_pins, x, angle in (("left", left, left_x, 0), ("right", right, right_x, 180)):
+            for idx, (pin, net) in enumerate(side_pins):
+                y = top_y - idx * pin_pitch
+                pin_locations[pin] = {"side": side, "x": x, "y": y, "net": net}
+        return {"lib_id": lib_id, "pin_locations": pin_locations, "body_w": body_w, "body_h": body_h}
+
+    # Fallback: generate custom embedded symbol
     lib_id = f"embedded:{kicad_id(ref)}"
     left, right = split_symbol_pins(pins)
     body_w, body_h = symbol_geometry(max(len(left), len(right)) * 2)
