@@ -44,10 +44,26 @@ def add(results: list[dict[str, str]], status: str, check: str, message: str) ->
     results.append({"status": status, "check": check, "message": message})
 
 
+def _to_windows_path(path_str: str) -> str:
+    """Convert WSL path to Windows path if running on WSL."""
+    if path_str.startswith("/mnt/"):
+        drive = path_str[5].upper()
+        rest = path_str[6:].replace("/", "\\")
+        return f"{drive}:{rest}"
+    return path_str
+
+
 def run(cmd: list[str], cwd: Path) -> tuple[int, str, str]:
+    # If kicad-cli is a Windows executable, convert all WSL paths to Windows format
+    is_win_exe = cmd[0].endswith(".exe") or "Program Files" in cmd[0]
+    if is_win_exe:
+        cmd = [cmd[0]] + [_to_windows_path(a) for a in cmd[1:]]
+        cwd_w = Path(_to_windows_path(str(cwd)))
+    else:
+        cwd_w = cwd
     p = subprocess.run(
         cmd,
-        cwd=cwd,
+        cwd=cwd_w,
         text=True,
         encoding="utf-8",
         errors="replace",

@@ -22,7 +22,7 @@ from typing import Any
 from erc_check import run_checks as run_static_erc
 from erc_check import write_markdown as write_static_erc_markdown
 from footprint_reader import get_footprint_for_component, is_footprint_available
-from symbol_reader import get_symbol_definition, get_lib_id_for_component, is_symbol_available
+from symbol_reader import get_symbol_definition, get_lib_id_for_component, is_symbol_available, get_pin_positions, resolve_pin_name
 from gen_easyeda_std import build_easyeda_document
 from gen_jlc_package import generate_jlc_package
 from render_design_preview import svg_for_manifest, write_html
@@ -440,35 +440,75 @@ def symbol_geometry(pin_count: int) -> tuple[float, float]:
 
 def write_custom_lib_symbol(lines: list[str], comp: dict[str, Any], pins: list[tuple[str, str]]) -> dict[str, Any]:
     ref = comp["ref"]
-    # Try to use standard KiCad library symbol
     symbol_field = comp.get("symbol", "")
     std_lib_id = get_lib_id_for_component(symbol_field) if symbol_field else ""
     std_symbol = get_symbol_definition(std_lib_id) if std_lib_id else None
 
-    if std_symbol:
-        # Use real KiCad library symbol - embed the definition directly
-        # First remove the (kicad_lib ...) wrapper and just get the (symbol ...) block
-        lib_id = std_lib_id
-        # Add the symbol definition as-is to the lib_symbols section
-        lines.append(std_symbol)
-        # Extract pin locations from the real symbol for net label placement
-        left, right = split_symbol_pins(pins)
-        body_w, body_h = 20.0, max(len(left), len(right)) * 2.54 + 5.08  # estimate
-        pin_pitch = 2.54
-        top_y = body_h / 2 - 2.54
-        left_x = -body_w / 2 - 2.54
-        right_x = body_w / 2 + 2.54
-        pin_locations: dict[str, dict[str, Any]] = {}
-        for side, side_pins, x, angle in (("left", left, left_x, 0), ("right", right, right_x, 180)):
-            for idx, (pin, net) in enumerate(side_pins):
-                y = top_y - idx * pin_pitch
-                pin_locations[pin] = {"side": side, "x": x, "y": y, "net": net}
-        return {"lib_id": lib_id, "pin_locations": pin_locations, "body_w": body_w, "body_h": body_h}
+    # Use standard symbol pin locations for accurate wiring, but always render
+    # as embedded review symbols in the schematic. Inlining complex KiCad
+    # standard library symbols (with extends, multi-unit sub-symbols) into a
+    # .kicad_sch causes kicad-cli loading failures. Embedded symbols load
+    # reliably for ERC/open/export validation.
+    used_std_pins = False
+    pin_locations: dict[str, dict[str, Any]] = {}
 
-    # Fallback: generate custom embedded symbol
+    if std_symbol and std_lib_id:
+        real_pins = get_pin_positions(std_lib_id)
+        by_number = real_pins.get("by_number", {})
+        by_name = real_pins.get("by_name", {})
+        if by_number or by_name:
+            for pin_name, net in pins:
+                resolved = resolve_pin_name(pin_name, std_lib_id)
+                pin_data = None
+                pin_number = None
+                if resolved in by_number:
+                    pin_data = by_number[resolved]
+                    pin_number = resolved
+                elif resolved in by_name:
+                    pin_data = by_name[resolved]
+                elif pin_name in by_number:
+                    pin_data = by_number[pin_name]
+                    pin_number = pin_name
+                elif pin_name in by_name:
+                    pin_data = by_name[pin_name]
+                if pin_data and pin_number is None:
+                    for num, info in by_number.items():
+                        if info is pin_data:
+                            pin_number = num
+                            break
+                if pin_data:
+                    px = pin_data["x"]
+                    py = pin_data["y"]
+                    angle = pin_data["angle"]
+                    if angle == 0:
+                        side = "right"
+                    elif angle == 180:
+                        side = "left"
+                    elif angle == 90:
+                        side = "top"
+                    else:
+                        side = "bottom"
+                    pin_locations[pin_name] = {"side": side, "x": px, "y": py, "net": net, "number": pin_number}
+                    used_std_pins = True
+
+    if not used_std_pins:
+        # Fallback: split pins left/right
+        left, right = split_symbol_pins(pins)
+        body_w, body_h = 20.0, max(len(left), len(right)) * 2.54 + 5.08
+        top_y = body_h / 2 - 2.54
+        for side_name, side_pins, sx in (("left", left, -body_w / 2 - 2.54), ("right", right, body_w / 2 + 2.54)):
+            for idx, (pin, net) in enumerate(side_pins):
+                pin_locations[pin] = {"side": side_name, "x": sx, "y": top_y - idx * 2.54, "net": net, "number": pin}
+
+    # Estimate body dimensions from pin positions
+    xs = [abs(p["x"]) for p in pin_locations.values()]
+    ys = [abs(p["y"]) for p in pin_locations.values()]
+    body_w = max(xs) * 2 + 10.0 if xs else 20.0
+    body_h = max(ys) * 2 + 10.0 if ys else 20.0
+
+    # Always generate embedded review symbol for reliable KiCad CLI loading
     lib_id = f"embedded:{kicad_id(ref)}"
     left, right = split_symbol_pins(pins)
-    body_w, body_h = symbol_geometry(max(len(left), len(right)) * 2)
     top_y = body_h / 2 - 3.81
     pin_pitch = 3.81
     left_x = -body_w / 2 - 2.54
@@ -506,11 +546,9 @@ def write_custom_lib_symbol(lines: list[str], comp: dict[str, Any], pins: list[t
         f'      (symbol "{kicad_string(kicad_id(ref))}_1_1"',
     ])
 
-    pin_locations: dict[str, dict[str, Any]] = {}
     for side, side_pins, x, angle in (("left", left, left_x, 0), ("right", right, right_x, 180)):
         for idx, (pin, net) in enumerate(side_pins):
             y = top_y - idx * pin_pitch
-            pin_locations[pin] = {"side": side, "x": x, "y": y, "net": net}
             lines.extend([
                 f'        (pin {pin_electrical_type(pin, net, comp)} line',
                 f'          (at {x:.2f} {y:.2f} {angle})',
@@ -525,10 +563,9 @@ def write_custom_lib_symbol(lines: list[str], comp: dict[str, Any], pins: list[t
             ])
     lines.extend([
         '      )',
-        '      (embedded_fonts no)',
         '    )',
     ])
-    return {"lib_id": lib_id, "pin_locations": pin_locations, "body_w": body_w, "body_h": body_h}
+    return {"lib_id": lib_id, "pin_locations": pin_locations, "body_w": body_w, "body_h": body_h, "std_lib_id": std_lib_id if std_symbol else ""}
 
 
 def add_wire(lines: list[str], x1: float, y1: float, x2: float, y2: float) -> None:
@@ -1087,9 +1124,10 @@ def write_schematic(outdir: Path, manifest: dict[str, Any]) -> Path:
     symbol_defs.append('  )')
 
     lines = [
-        '(kicad_sch (version 20230121) (generator "embedded-engineering-skill")',
+        '(kicad_sch (version 20260306) (generator "embedded-engineering-skill")',
         f'  (uuid "{uuid.uuid4()}")',
         '  (paper "A3")',
+        '  (embedded_fonts yes)',
         '  (title_block',
         f'    (title "{kicad_string(name)}")',
         '    (comment 1 "Generated pin-level review schematic. project.netlist.json is the source of truth for static ERC.")',
@@ -1137,8 +1175,11 @@ def write_schematic(outdir: Path, manifest: dict[str, Any]) -> Path:
             '    )',
         ])
         for pin, _net in pins:
+            # Use pin number (e.g. "A1") not pin name (e.g. "GND") for KiCad instance
+            pin_info_for_num = meta["pin_locations"].get(pin, {})
+            pin_ref = pin_info_for_num.get("number", pin)
             lines.extend([
-                f'    (pin "{kicad_string(pin)}"',
+                f'    (pin "{kicad_string(pin_ref)}"',
                 f'      (uuid "{uuid.uuid4()}")',
                 '    )',
             ])
